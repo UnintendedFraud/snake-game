@@ -1,14 +1,16 @@
 package main
 
 import (
+	"image/color"
+
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type Game struct{}
 
 func main() {
-	ebiten.SetWindowSize(640, 480)
+	ebiten.SetWindowSize(1024, 768)
 	ebiten.SetWindowTitle("Name window")
 
 	if err := ebiten.RunGame(&Game{}); err != nil {
@@ -21,9 +23,9 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	ebitenutil.DebugPrint(screen, "Hello world")
+	vector.DrawFilledRect(screen, 1, 1, 4, 1, color.White, true)
 }
 
 func (g *Game) Layout(outsideWith, outsideHeight int) (screenWidth, screenHeight int) {
-	return 320, 240
+	return 10, 10
 }
