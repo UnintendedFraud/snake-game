@@ -19,6 +19,7 @@ const (
 type Game struct {
 	state GameState
 	snake *components.Snake
+	menu  *components.Menu
 }
 
 const (
@@ -33,6 +34,7 @@ func main() {
 	game := &Game{
 		state: Playing,
 		snake: components.InitSnake(getCenter(GAME_WIDTH, GAME_HEIGHT)),
+		menu:  components.InitMenu(),
 	}
 
 	if err := ebiten.RunGame(game); err != nil {
@@ -60,7 +62,7 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.Gray16{0x5050})
-	g.snake.Draw(screen)
+	g.snake.Render(screen)
 }
 
 func (g *Game) Layout(outsideWith, outsideHeight int) (screenWidth, screenHeight int) {

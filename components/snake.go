@@ -38,7 +38,7 @@ func InitSnake(center image.Point) *Snake {
 	}
 }
 
-func (snake *Snake) Draw(screen *ebiten.Image) {
+func (snake *Snake) Render(screen *ebiten.Image) {
 	if snake == nil {
 		return
 	}
