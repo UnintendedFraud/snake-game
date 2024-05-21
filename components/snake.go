@@ -4,6 +4,7 @@ import (
 	"image"
 	"image/color"
 
+	"github.com/UnintendedFraud/snake-game/utils"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -19,6 +20,7 @@ const (
 )
 
 type Snake struct {
+	img       *ebiten.Image
 	speed     int
 	direction Direction
 	positions []image.Point
@@ -30,22 +32,30 @@ const (
 	DEFAULT_SPEED = 1
 )
 
-func InitSnake(center image.Point) *Snake {
+func InitSnake(width, height int) *Snake {
+	h := float64(height) * 0.9
+
+	img := ebiten.NewImage(width, int(h))
+
 	return &Snake{
+		img:       img,
 		speed:     DEFAULT_SPEED,
 		direction: Right,
-		positions: getInitPositions(center),
+		positions: getInitPositions(utils.GetCenter(width, height)),
 	}
 }
 
 func (snake *Snake) Render(screen *ebiten.Image) {
-	if snake == nil {
+	if snake == nil || snake.img == nil {
 		return
 	}
 
+	snake.img.Clear()
+	snake.img.Fill(color.Gray16{0x1111})
+
 	for _, point := range snake.positions {
 		vector.DrawFilledRect(
-			screen,
+			snake.img,
 			float32(point.X),
 			float32(point.Y),
 			1,
@@ -54,6 +64,13 @@ func (snake *Snake) Render(screen *ebiten.Image) {
 			true,
 		)
 	}
+
+	options := &ebiten.DrawImageOptions{}
+
+	ty := float64(screen.Bounds().Dy()) * 0.1
+	options.GeoM.Translate(0, ty)
+
+	screen.DrawImage(snake.img, options)
 }
 
 func (snake *Snake) ManageDirection() {
@@ -71,8 +88,10 @@ func (snake *Snake) ManageDirection() {
 	}
 }
 
-func (snake *Snake) HasCollided(maxX, maxY int) bool {
+func (snake *Snake) HasCollided() bool {
 	head := snake.positions[0]
+	maxX := snake.img.Bounds().Dx()
+	maxY := snake.img.Bounds().Dy()
 
 	if head.X <= 0 || head.X >= maxX || head.Y <= 0 || head.Y >= maxY {
 		return true
