@@ -40,7 +40,7 @@ func main() {
 
 	game := &Game{
 		titleImg: initTitle(),
-		state:    Playing,
+		state:    Menu,
 		snake:    components.InitSnake(WINDOW_WIDTH, WINDOW_HEIGHT),
 		menu:     components.InitMenu(),
 	}
@@ -53,6 +53,7 @@ func main() {
 func (g *Game) Update() error {
 	switch g.state {
 	case Menu:
+		g.menu.UpdateFocus()
 
 	case Playing:
 		g.snake.ManageDirection()
