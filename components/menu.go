@@ -1,11 +1,11 @@
 package components
 
 import (
+	"fmt"
 	"image/color"
 	"os"
 
 	"github.com/UnintendedFraud/snake-game/colors"
-	"github.com/UnintendedFraud/snake-game/utils"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
@@ -19,9 +19,10 @@ const (
 )
 
 type Menu struct {
-	font    *text.GoTextFaceSource
-	buttons []Button
-	img     *ebiten.Image
+	font       *text.GoTextFaceSource
+	focusedIdx int
+	buttons    []Button
+	img        *ebiten.Image
 }
 
 type Button struct {
@@ -43,40 +44,52 @@ func InitMenu() *Menu {
 	}
 
 	return &Menu{
-		font: font,
-		img:  ebiten.NewImage(200, 200),
+		font:       font,
+		img:        ebiten.NewImage(200, 200),
+		focusedIdx: 0,
 		buttons: []Button{
 			{
-				text:      "start game",
-				action:    StartGame,
-				isFocused: true,
+				text:   "start game",
+				action: StartGame,
 			},
 			{
-				text:      "exit game",
-				action:    ExitGame,
-				isFocused: false,
+				text:   "exit game",
+				action: ExitGame,
 			},
 		},
 	}
 }
 
-func (m *Menu) UpdateFocus() {
-	focusedIdx, err := utils.IndexOf(m.buttons, isButtonFocused)
-	if err != nil {
-		panic(err)
+func (m *Menu) Click(game *Game) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) ||
+		inpututil.IsKeyJustPressed(ebiten.KeyKPEnter) {
+		m.executeAction(game)
 	}
+}
 
+func (m *Menu) executeAction(game *Game) {
+	action := m.buttons[m.focusedIdx].action
+
+	switch action {
+	case StartGame:
+		game.state = Playing
+
+	case ExitGame:
+		fmt.Println("Closing the game")
+		os.Exit(0)
+	}
+}
+
+func (m *Menu) UpdateFocus() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyUp) {
-		if focusedIdx != 0 {
-			m.buttons[focusedIdx].isFocused = false
-			m.buttons[focusedIdx-1].isFocused = true
+		if m.focusedIdx != 0 {
+			m.focusedIdx--
 		}
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
-		if focusedIdx != len(m.buttons)-1 {
-			m.buttons[focusedIdx].isFocused = false
-			m.buttons[focusedIdx+1].isFocused = true
+		if m.focusedIdx != len(m.buttons)-1 {
+			m.focusedIdx++
 		}
 	}
 }
@@ -86,8 +99,9 @@ func (m *Menu) Render(screen *ebiten.Image) {
 
 	for idx, b := range m.buttons {
 		fontOptions := &text.DrawOptions{}
+		isFocused := idx == m.focusedIdx
 
-		menuImg := generateMenuImg(b, m.font, fontOptions)
+		menuImg := generateMenuImg(b, m.font, fontOptions, isFocused)
 
 		x := float64(0)
 		y := float64(idx*50 + 50)
@@ -109,8 +123,9 @@ func generateMenuImg(
 	button Button,
 	font *text.GoTextFaceSource,
 	fontOptions *text.DrawOptions,
+	isFocused bool,
 ) *ebiten.Image {
-	if button.isFocused {
+	if isFocused {
 		fontOptions.ColorScale.ScaleWithColor(colors.Red)
 	} else {
 		fontOptions.ColorScale.ScaleWithColor(color.White)
