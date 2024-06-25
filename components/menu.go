@@ -72,6 +72,7 @@ func (m *Menu) executeAction(game *Game) {
 
 	switch action {
 	case StartGame:
+		game.snake = InitSnake(WINDOW_WIDTH, WINDOW_HEIGHT)
 		game.state = Playing
 
 	case ExitGame:

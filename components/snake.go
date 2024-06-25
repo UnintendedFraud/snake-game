@@ -3,6 +3,7 @@ package components
 import (
 	"image"
 	"image/color"
+	"time"
 
 	"github.com/UnintendedFraud/snake-game/utils"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -24,12 +25,16 @@ type Snake struct {
 	speed     int
 	direction Direction
 	positions []image.Point
+
+	prevTime time.Time
+	currTime time.Time
+	diff     time.Duration
 }
 
 const (
-	START_LENGTH  = 100
-	SNAKE_HEIGHT  = 1
-	DEFAULT_SPEED = 1
+	START_LENGTH  = 50
+	SNAKE_HEIGHT  = 10
+	DEFAULT_SPEED = 10
 )
 
 func InitSnake(width, height int) *Snake {
@@ -58,7 +63,7 @@ func (snake *Snake) Render(screen *ebiten.Image) {
 			snake.img,
 			float32(point.X),
 			float32(point.Y),
-			1,
+			SNAKE_HEIGHT,
 			SNAKE_HEIGHT,
 			color.White,
 			true,
@@ -101,6 +106,16 @@ func (snake *Snake) HasCollided() bool {
 }
 
 func (snake *Snake) Move() {
+	snake.prevTime = snake.currTime
+	snake.currTime = time.Now()
+	snake.diff += snake.currTime.Sub(snake.prevTime)
+
+	if snake.diff < 200*time.Millisecond {
+		return
+	}
+
+	snake.diff = 0
+
 	snake.positions = append(
 		[]image.Point{snake.getNextPosition()},
 		snake.positions[0:len(snake.positions)-1]...,
@@ -125,13 +140,13 @@ func (snake *Snake) getNextPosition() image.Point {
 
 	switch snake.direction {
 	case Up:
-		nextHead.Y--
+		nextHead.Y = nextHead.Y - SNAKE_HEIGHT
 	case Right:
-		nextHead.X++
+		nextHead.X = nextHead.X + SNAKE_HEIGHT
 	case Down:
-		nextHead.Y++
+		nextHead.Y = nextHead.Y + SNAKE_HEIGHT
 	case Left:
-		nextHead.X--
+		nextHead.X = nextHead.X - SNAKE_HEIGHT
 	}
 
 	return nextHead

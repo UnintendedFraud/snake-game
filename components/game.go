@@ -1,9 +1,9 @@
 package components
 
 import (
-	"fmt"
 	"image/color"
 	"os"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
@@ -13,8 +13,10 @@ const (
 	// GAME_WIDTH  int = 480
 	// GAME_HEIGHT int = 320
 
-	WINDOW_WIDTH  int = 1024
-	WINDOW_HEIGHT int = 768
+	WINDOW_WIDTH  int = 1200
+	WINDOW_HEIGHT int = 800
+
+	TICK_RATE = 1
 )
 
 type GameState int
@@ -25,8 +27,17 @@ const (
 	Dead
 )
 
+type TickRate struct {
+	prevTime time.Time
+	currTime time.Time
+	rate     int
+	diff     time.Duration
+}
+
 type Game struct {
 	titleImg *ebiten.Image
+
+	tick TickRate
 
 	state GameState
 	snake *Snake
@@ -60,7 +71,7 @@ func (g *Game) Update() error {
 		}
 
 	case Dead:
-		fmt.Println("DEAD")
+		g.state = MainMenu
 	}
 
 	return nil
