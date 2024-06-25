@@ -3,7 +3,6 @@ package components
 import (
 	"image/color"
 	"os"
-	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
@@ -15,8 +14,6 @@ const (
 
 	WINDOW_WIDTH  int = 1200
 	WINDOW_HEIGHT int = 800
-
-	TICK_RATE = 1
 )
 
 type GameState int
@@ -27,17 +24,8 @@ const (
 	Dead
 )
 
-type TickRate struct {
-	prevTime time.Time
-	currTime time.Time
-	rate     int
-	diff     time.Duration
-}
-
 type Game struct {
 	titleImg *ebiten.Image
-
-	tick TickRate
 
 	state GameState
 	snake *Snake
