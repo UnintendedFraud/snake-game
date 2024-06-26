@@ -21,10 +21,11 @@ const (
 )
 
 type Snake struct {
-	img       *ebiten.Image
-	speed     int
-	direction Direction
-	positions []image.Point
+	img           *ebiten.Image
+	speed         int64
+	direction     Direction
+	positions     []image.Point
+	forceMaxSpeed bool
 
 	prevTime time.Time
 	currTime time.Time
@@ -32,9 +33,10 @@ type Snake struct {
 }
 
 const (
-	START_LENGTH  = 50
-	SNAKE_HEIGHT  = 10
-	DEFAULT_SPEED = 10
+	START_LENGTH       = 20
+	SNAKE_HEIGHT       = 8
+	MIN_SPEED    int64 = 500
+	MAX_SPEED    int64 = 20
 )
 
 func InitSnake(width, height int) *Snake {
@@ -44,7 +46,7 @@ func InitSnake(width, height int) *Snake {
 
 	return &Snake{
 		img:       img,
-		speed:     DEFAULT_SPEED,
+		speed:     MIN_SPEED,
 		direction: Right,
 		positions: getInitPositions(utils.GetCenter(width, height)),
 	}
@@ -76,6 +78,14 @@ func (snake *Snake) Render(screen *ebiten.Image) {
 	options.GeoM.Translate(0, ty)
 
 	screen.DrawImage(snake.img, options)
+}
+
+func (snake *Snake) SpeedUp() {
+	if utils.SliceContains(inpututil.AppendPressedKeys([]ebiten.Key{}), ebiten.KeySpace) && !snake.forceMaxSpeed {
+		snake.forceMaxSpeed = true
+	} else if snake.forceMaxSpeed {
+		snake.forceMaxSpeed = false
+	}
 }
 
 func (snake *Snake) ManageDirection() {
@@ -110,7 +120,14 @@ func (snake *Snake) Move() {
 	snake.currTime = time.Now()
 	snake.diff += snake.currTime.Sub(snake.prevTime)
 
-	if snake.diff < 200*time.Millisecond {
+	var speed int64
+	if snake.forceMaxSpeed {
+		speed = MAX_SPEED
+	} else {
+		speed = snake.speed
+	}
+
+	if snake.diff.Milliseconds() < speed {
 		return
 	}
 
@@ -156,7 +173,7 @@ func getInitPositions(center image.Point) []image.Point {
 	points := []image.Point{}
 
 	for i := range START_LENGTH {
-		points = append(points, image.Point{X: center.X - i, Y: center.Y})
+		points = append(points, image.Point{X: center.X - i*SNAKE_HEIGHT, Y: center.Y})
 	}
 
 	return points

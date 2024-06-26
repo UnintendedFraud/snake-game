@@ -58,7 +58,7 @@ func Test_IndexOf(t *testing.T) {
 	}
 
 	for _, ex := range examples {
-		idx, err := IndexOf(ex.s, ex.searchFn)
+		idx, err := SliceIndexOf(ex.s, ex.searchFn)
 
 		if idx != ex.expected.idx {
 			t.Errorf("%s: expected index [%d] but got [%d]", ex.name, ex.expected.idx, idx)
@@ -71,7 +71,7 @@ func Test_IndexOf(t *testing.T) {
 	}
 
 	for _, ex := range cplxExamples {
-		idx, err := IndexOf(ex.s, ex.searchFn)
+		idx, err := SliceIndexOf(ex.s, ex.searchFn)
 
 		if idx != ex.expected.idx {
 			t.Errorf("%s: expected index [%d] but got [%d]", ex.name, ex.expected.idx, idx)
@@ -80,6 +80,41 @@ func Test_IndexOf(t *testing.T) {
 		errIsNull := err == nil
 		if errIsNull != ex.expected.errIsNull {
 			t.Errorf("%s: expected nil error [%t] but got [%t]", ex.name, ex.expected.errIsNull, errIsNull)
+		}
+	}
+}
+
+func Test_Contains(t *testing.T) {
+	type examples[T comparable] struct {
+		s        []T
+		values   []T
+		expected []bool
+	}
+
+	examples1 := examples[int]{
+		s:        []int{2, 3, 432, 123, 21},
+		values:   []int{432, 111},
+		expected: []bool{true, false},
+	}
+	examples2 := examples[string]{
+		s:        []string{"one", "two", "three"},
+		values:   []string{"invalid", "one"},
+		expected: []bool{false, true},
+	}
+
+	for i, v := range examples1.values {
+		expected := examples1.expected[i]
+
+		if SliceContains(examples1.s, v) != expected {
+			t.Errorf("Test_Contains - [%v] being in %+v should be %t", v, examples1.s, expected)
+		}
+	}
+
+	for i, v := range examples2.values {
+		expected := examples2.expected[i]
+
+		if SliceContains(examples2.s, v) != expected {
+			t.Errorf("Test_Contains - [%v] being in %+v should be %t", v, examples2.s, expected)
 		}
 	}
 }

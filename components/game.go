@@ -51,6 +51,7 @@ func (g *Game) Update() error {
 		g.menu.Click(g)
 
 	case Playing:
+		g.snake.SpeedUp()
 		g.snake.ManageDirection()
 		g.snake.Move()
 

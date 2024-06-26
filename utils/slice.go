@@ -2,7 +2,7 @@ package utils
 
 import "fmt"
 
-func IndexOf[T any](
+func SliceIndexOf[T any](
 	s []T,
 	fn func(T) bool,
 ) (int, error) {
@@ -13,4 +13,14 @@ func IndexOf[T any](
 	}
 
 	return -1, fmt.Errorf("failed to find a matching element")
+}
+
+func SliceContains[T comparable](s []T, el T) bool {
+	for _, element := range s {
+		if element == el {
+			return true
+		}
+	}
+
+	return false
 }
