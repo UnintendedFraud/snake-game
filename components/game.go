@@ -9,9 +9,6 @@ import (
 )
 
 const (
-	// GAME_WIDTH  int = 480
-	// GAME_HEIGHT int = 320
-
 	WINDOW_WIDTH  int = 1200
 	WINDOW_HEIGHT int = 800
 )
@@ -25,6 +22,8 @@ const (
 )
 
 type Game struct {
+	font *text.GoTextFaceSource
+
 	titleImg *ebiten.Image
 
 	state GameState
@@ -36,8 +35,19 @@ func InitGame() *Game {
 	ebiten.SetWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT)
 	ebiten.SetWindowTitle("Snake")
 
+	fontFile, err := os.Open("fonts/rockers_garage.ttf")
+	if err != nil {
+		panic(err)
+	}
+
+	font, err := text.NewGoTextFaceSource(fontFile)
+	if err != nil {
+		panic(err)
+	}
+
 	return &Game{
-		titleImg: initTitle(),
+		font:     font,
+		titleImg: initTitle(font),
 		state:    MainMenu,
 		snake:    InitSnake(WINDOW_WIDTH, WINDOW_HEIGHT),
 		menu:     InitMenu(),
@@ -51,16 +61,14 @@ func (g *Game) Update() error {
 		g.menu.Click(g)
 
 	case Playing:
-		g.snake.SpeedUp()
+		g.snake.Eat()
+		g.snake.Sprint()
 		g.snake.ManageDirection()
 		g.snake.Move()
 
 		if g.snake.HasCollided() {
-			g.state = Dead
+			g.snake.isDead = true
 		}
-
-	case Dead:
-		g.state = MainMenu
 	}
 
 	return nil
@@ -71,10 +79,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	switch g.state {
 	case MainMenu:
-		g.menu.Render(screen)
+		g.menu.Render(screen, g.font)
 
 	case Playing:
-		g.snake.Render(screen)
+		g.snake.Render(screen, g.font)
 	}
 }
 
@@ -82,17 +90,7 @@ func (g *Game) Layout(outsideWith, outsideHeight int) (screenWidth, screenHeight
 	return WINDOW_WIDTH, WINDOW_HEIGHT
 }
 
-func initTitle() *ebiten.Image {
-	fontFile, err := os.Open("fonts/rockers_garage.ttf")
-	if err != nil {
-		panic(err)
-	}
-
-	font, err := text.NewGoTextFaceSource(fontFile)
-	if err != nil {
-		panic(err)
-	}
-
+func initTitle(font *text.GoTextFaceSource) *ebiten.Image {
 	face := &text.GoTextFace{
 		Source: font,
 		Size:   60,

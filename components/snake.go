@@ -3,11 +3,15 @@ package components
 import (
 	"image"
 	"image/color"
+	"math/rand"
+	"slices"
 	"time"
 
+	"github.com/UnintendedFraud/snake-game/colors"
 	"github.com/UnintendedFraud/snake-game/utils"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
@@ -21,52 +25,77 @@ const (
 )
 
 type Snake struct {
-	img           *ebiten.Image
-	speed         int64
-	direction     Direction
-	positions     []image.Point
-	forceMaxSpeed bool
+	img       *ebiten.Image
+	speed     int64
+	direction Direction
+	positions []image.Point
+	sprint    bool
+
+	ennemies []image.Point
 
 	prevTime time.Time
 	currTime time.Time
 	diff     time.Duration
+
+	isDead bool
 }
 
 const (
 	START_LENGTH       = 20
-	SNAKE_HEIGHT       = 8
+	THICKNESS          = 8
 	MIN_SPEED    int64 = 500
-	MAX_SPEED    int64 = 20
+	MAX_SPEED    int64 = 50
+	MAX_SPRINT   int64 = 20
 )
 
 func InitSnake(width, height int) *Snake {
-	h := float64(height) * 0.9
+	h := int(float64(height) * 0.9)
 
-	img := ebiten.NewImage(width, int(h))
+	img := ebiten.NewImage(width, h)
 
 	return &Snake{
 		img:       img,
 		speed:     MIN_SPEED,
 		direction: Right,
 		positions: getInitPositions(utils.GetCenter(width, height)),
+		ennemies:  randomEnnemies(width, h, 10),
+		isDead:    false,
 	}
 }
 
-func (snake *Snake) Render(screen *ebiten.Image) {
+func (snake *Snake) Render(screen *ebiten.Image, font *text.GoTextFaceSource) {
 	if snake == nil || snake.img == nil {
 		return
 	}
 
 	snake.img.Clear()
-	snake.img.Fill(color.Gray16{0x1111})
+
+	if snake.isDead {
+		renderDeadScreen(screen, snake, font)
+		return
+	}
+
+	snake.img.Fill(colors.LightGray)
+
+	for _, ennemy := range snake.ennemies {
+		vector.DrawFilledRect(
+			snake.img,
+			float32(ennemy.X),
+			float32(ennemy.Y),
+			THICKNESS,
+			THICKNESS,
+			colors.DarkYellow,
+			true,
+		)
+	}
 
 	for _, point := range snake.positions {
 		vector.DrawFilledRect(
 			snake.img,
 			float32(point.X),
 			float32(point.Y),
-			SNAKE_HEIGHT,
-			SNAKE_HEIGHT,
+			THICKNESS,
+			THICKNESS,
 			color.White,
 			true,
 		)
@@ -80,11 +109,11 @@ func (snake *Snake) Render(screen *ebiten.Image) {
 	screen.DrawImage(snake.img, options)
 }
 
-func (snake *Snake) SpeedUp() {
-	if utils.SliceContains(inpututil.AppendPressedKeys([]ebiten.Key{}), ebiten.KeySpace) && !snake.forceMaxSpeed {
-		snake.forceMaxSpeed = true
-	} else if snake.forceMaxSpeed {
-		snake.forceMaxSpeed = false
+func (snake *Snake) Sprint() {
+	if utils.SliceContains(inpututil.AppendPressedKeys([]ebiten.Key{}), ebiten.KeySpace) && !snake.sprint {
+		snake.sprint = true
+	} else if snake.sprint {
+		snake.sprint = false
 	}
 }
 
@@ -115,14 +144,36 @@ func (snake *Snake) HasCollided() bool {
 	return snake.hitItself()
 }
 
+func (snake *Snake) Eat() {
+	head := snake.positions[0]
+
+	idx, err := utils.SliceIndexOf(snake.ennemies, func(e image.Point) bool {
+		return e.X == head.X && e.Y == head.Y
+	})
+	if err != nil || idx < 0 {
+		return
+	}
+
+	snake.ennemies = slices.Delete(snake.ennemies, idx, idx+1)
+
+	snake.positions = append(
+		[]image.Point{snake.getNextPosition()},
+		snake.positions...,
+	)
+
+	if snake.speed > MAX_SPEED {
+		snake.speed -= 50
+	}
+}
+
 func (snake *Snake) Move() {
 	snake.prevTime = snake.currTime
 	snake.currTime = time.Now()
 	snake.diff += snake.currTime.Sub(snake.prevTime)
 
 	var speed int64
-	if snake.forceMaxSpeed {
-		speed = MAX_SPEED
+	if snake.sprint {
+		speed = MAX_SPRINT
 	} else {
 		speed = snake.speed
 	}
@@ -157,13 +208,13 @@ func (snake *Snake) getNextPosition() image.Point {
 
 	switch snake.direction {
 	case Up:
-		nextHead.Y = nextHead.Y - SNAKE_HEIGHT
+		nextHead.Y = nextHead.Y - THICKNESS
 	case Right:
-		nextHead.X = nextHead.X + SNAKE_HEIGHT
+		nextHead.X = nextHead.X + THICKNESS
 	case Down:
-		nextHead.Y = nextHead.Y + SNAKE_HEIGHT
+		nextHead.Y = nextHead.Y + THICKNESS
 	case Left:
-		nextHead.X = nextHead.X - SNAKE_HEIGHT
+		nextHead.X = nextHead.X - THICKNESS
 	}
 
 	return nextHead
@@ -173,8 +224,53 @@ func getInitPositions(center image.Point) []image.Point {
 	points := []image.Point{}
 
 	for i := range START_LENGTH {
-		points = append(points, image.Point{X: center.X - i*SNAKE_HEIGHT, Y: center.Y})
+		points = append(points, image.Point{X: center.X - i*THICKNESS, Y: center.Y})
 	}
 
 	return points
+}
+
+func randomEnnemies(width int, height int, count int) []image.Point {
+	ennemies := []image.Point{}
+
+	w := width / THICKNESS
+	h := height / THICKNESS
+
+	for range count {
+		x := rand.Intn(w) * THICKNESS
+		y := rand.Intn(h) * THICKNESS
+
+		ennemies = append(ennemies, image.Point{X: x, Y: y})
+	}
+
+	return ennemies
+}
+
+func renderDeadScreen(screen *ebiten.Image, snake *Snake, font *text.GoTextFaceSource) {
+	snake.img.Fill(colors.Black)
+
+	fontOptions := &text.DrawOptions{}
+	fontOptions.ColorScale.ScaleWithColor(colors.Red)
+
+	deadImg := ebiten.NewImage(450, 90)
+
+	text.Draw(
+		deadImg,
+		"You are DEAD !",
+		&text.GoTextFace{
+			Source: font,
+			Size:   80,
+		},
+		fontOptions,
+	)
+
+	deadImgW := deadImg.Bounds().Dx()
+	deadImgH := deadImg.Bounds().Dy()
+	x := float64(screen.Bounds().Dx()/2 - deadImgW/2)
+	y := float64(screen.Bounds().Dy()/2 - deadImgH/2)
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(x, y)
+	snake.img.DrawImage(deadImg, op)
+
+	screen.DrawImage(snake.img, &ebiten.DrawImageOptions{})
 }

@@ -24,3 +24,13 @@ func SliceContains[T comparable](s []T, el T) bool {
 
 	return false
 }
+
+func SliceContainsCustom[T comparable](s []T, fn func(el T) bool) bool {
+	for _, el := range s {
+		if fn(el) {
+			return true
+		}
+	}
+
+	return false
+}

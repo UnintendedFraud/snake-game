@@ -19,7 +19,6 @@ const (
 )
 
 type Menu struct {
-	font       *text.GoTextFaceSource
 	focusedIdx int
 	buttons    []Button
 	img        *ebiten.Image
@@ -33,18 +32,7 @@ type Button struct {
 }
 
 func InitMenu() *Menu {
-	fontFile, err := os.Open("fonts/rockers_garage.ttf")
-	if err != nil {
-		panic(err)
-	}
-
-	font, err := text.NewGoTextFaceSource(fontFile)
-	if err != nil {
-		panic(err)
-	}
-
 	return &Menu{
-		font:       font,
 		img:        ebiten.NewImage(200, 200),
 		focusedIdx: 0,
 		buttons: []Button{
@@ -95,14 +83,14 @@ func (m *Menu) UpdateFocus() {
 	}
 }
 
-func (m *Menu) Render(screen *ebiten.Image) {
+func (m *Menu) Render(screen *ebiten.Image, font *text.GoTextFaceSource) {
 	m.Clear()
 
 	for idx, b := range m.buttons {
 		fontOptions := &text.DrawOptions{}
 		isFocused := idx == m.focusedIdx
 
-		menuImg := generateMenuImg(b, m.font, fontOptions, isFocused)
+		menuImg := generateMenuImg(b, font, fontOptions, isFocused)
 
 		x := float64(0)
 		y := float64(idx*50 + 50)
