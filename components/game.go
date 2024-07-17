@@ -69,6 +69,10 @@ func (g *Game) Update() error {
 		if g.snake.HasCollided() {
 			g.snake.isDead = true
 		}
+
+		if g.snake.isDead {
+			g.snake.Click(g)
+		}
 	}
 
 	return nil

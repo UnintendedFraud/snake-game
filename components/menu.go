@@ -2,47 +2,32 @@ package components
 
 import (
 	"fmt"
-	"image/color"
 	"os"
 
-	"github.com/UnintendedFraud/snake-game/colors"
+	"github.com/UnintendedFraud/snake-game/components/buttons"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
-type MenuAction int
-
-const (
-	StartGame MenuAction = iota
-	ExitGame
-)
-
 type Menu struct {
 	focusedIdx int
-	buttons    []Button
+	buttons    []buttons.MenuButton
 	img        *ebiten.Image
-}
-
-type Button struct {
-	text      string
-	action    MenuAction
-	isFocused bool
-	img       ebiten.Image
 }
 
 func InitMenu() *Menu {
 	return &Menu{
 		img:        ebiten.NewImage(200, 200),
 		focusedIdx: 0,
-		buttons: []Button{
+		buttons: []buttons.MenuButton{
 			{
-				text:   "start game",
-				action: StartGame,
+				Value:  "start game",
+				Action: buttons.StartGame,
 			},
 			{
-				text:   "exit game",
-				action: ExitGame,
+				Value:  "exit game",
+				Action: buttons.ExitGame,
 			},
 		},
 	}
@@ -51,19 +36,17 @@ func InitMenu() *Menu {
 func (m *Menu) Click(game *Game) {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) ||
 		inpututil.IsKeyJustPressed(ebiten.KeyKPEnter) {
-		m.executeAction(game)
+		m.executeAction(game, m.buttons[m.focusedIdx].Action)
 	}
 }
 
-func (m *Menu) executeAction(game *Game) {
-	action := m.buttons[m.focusedIdx].action
-
+func (m *Menu) executeAction(game *Game, action buttons.MenuAction) {
 	switch action {
-	case StartGame:
+	case buttons.StartGame:
 		game.snake = InitSnake(WINDOW_WIDTH, WINDOW_HEIGHT)
 		game.state = Playing
 
-	case ExitGame:
+	case buttons.ExitGame:
 		fmt.Println("Closing the game")
 		os.Exit(0)
 	}
@@ -87,10 +70,7 @@ func (m *Menu) Render(screen *ebiten.Image, font *text.GoTextFaceSource) {
 	m.Clear()
 
 	for idx, b := range m.buttons {
-		fontOptions := &text.DrawOptions{}
-		isFocused := idx == m.focusedIdx
-
-		menuImg := generateMenuImg(b, font, fontOptions, isFocused)
+		menuImg := b.GetMenuButtonImg(font, 24, m.focusedIdx == idx)
 
 		x := float64(0)
 		y := float64(idx*50 + 50)
@@ -106,35 +86,4 @@ func (m *Menu) Render(screen *ebiten.Image, font *text.GoTextFaceSource) {
 
 func (m *Menu) Clear() {
 	m.img.Clear()
-}
-
-func generateMenuImg(
-	button Button,
-	font *text.GoTextFaceSource,
-	fontOptions *text.DrawOptions,
-	isFocused bool,
-) *ebiten.Image {
-	if isFocused {
-		fontOptions.ColorScale.ScaleWithColor(colors.Red)
-	} else {
-		fontOptions.ColorScale.ScaleWithColor(color.White)
-	}
-
-	img := ebiten.NewImage(200, 50)
-
-	text.Draw(
-		img,
-		button.text,
-		&text.GoTextFace{
-			Source: font,
-			Size:   24,
-		},
-		fontOptions,
-	)
-
-	return img
-}
-
-func isButtonFocused(b Button) bool {
-	return b.isFocused
 }

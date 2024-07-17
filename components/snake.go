@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/UnintendedFraud/snake-game/colors"
+	"github.com/UnintendedFraud/snake-game/components/buttons"
 	"github.com/UnintendedFraud/snake-game/utils"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -220,6 +221,13 @@ func (snake *Snake) getNextPosition() image.Point {
 	return nextHead
 }
 
+func (snake *Snake) Click(game *Game) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) ||
+		inpututil.IsKeyJustPressed(ebiten.KeyKPEnter) {
+		game.state = MainMenu
+	}
+}
+
 func getInitPositions(center image.Point) []image.Point {
 	points := []image.Point{}
 
@@ -271,6 +279,19 @@ func renderDeadScreen(screen *ebiten.Image, snake *Snake, font *text.GoTextFaceS
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(x, y)
 	snake.img.DrawImage(deadImg, op)
+
+	// ---- return to menu button
+
+	returnToMenuButton := buttons.MenuButton{
+		Value:  "return to menu",
+		Action: buttons.ReturnToMenu,
+	}
+
+	rtmbImg := returnToMenuButton.GetMenuButtonImg(font, 24, true)
+
+	rtmOp := &ebiten.DrawImageOptions{}
+	rtmOp.GeoM.Translate(x, y+100)
+	snake.img.DrawImage(rtmbImg, rtmOp)
 
 	screen.DrawImage(snake.img, &ebiten.DrawImageOptions{})
 }
