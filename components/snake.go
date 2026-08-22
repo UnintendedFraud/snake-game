@@ -1,6 +1,7 @@
 package components
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"math/rand"
@@ -39,6 +40,9 @@ type Snake struct {
 	diff     time.Duration
 
 	isDead bool
+
+	total int
+	score int
 }
 
 const (
@@ -70,6 +74,8 @@ func (snake *Snake) Render(screen *ebiten.Image, font *text.GoTextFaceSource) {
 	}
 
 	snake.img.Clear()
+
+	renderScoreScreen(screen, snake, font)
 
 	if snake.isDead {
 		renderDeadScreen(screen, snake, font)
@@ -252,6 +258,41 @@ func randomEnnemies(width int, height int, count int) []image.Point {
 	}
 
 	return ennemies
+}
+
+func renderScoreScreen(screen *ebiten.Image, snake *Snake, font *text.GoTextFaceSource) {
+	scoreImg := ebiten.NewImage(WINDOW_WIDTH, 100)
+	scoreImg.Fill(colors.Red)
+
+	levelOptions := &text.DrawOptions{}
+	levelOptions.ColorScale.ScaleWithColor(color.White)
+	levelOptions.GeoM.Translate(10, 10)
+	text.Draw(
+		scoreImg,
+		"Level 1",
+		&text.GoTextFace{
+			Source: font,
+			Size:   25,
+		},
+		levelOptions,
+	)
+
+	scoreOptions := &text.DrawOptions{}
+	scoreOptions.ColorScale.ScaleWithColor(color.White)
+	scoreOptions.GeoM.Translate(100, 10)
+	text.Draw(
+		scoreImg,
+		fmt.Sprintf("Score: %d/%d", snake.score, snake.total),
+		&text.GoTextFace{
+			Source: font,
+			Size:   25,
+		},
+		scoreOptions,
+	)
+
+	snake.img.DrawImage(scoreImg, &ebiten.DrawImageOptions{})
+
+	screen.DrawImage(snake.img, &ebiten.DrawImageOptions{})
 }
 
 func renderDeadScreen(screen *ebiten.Image, snake *Snake, font *text.GoTextFaceSource) {
